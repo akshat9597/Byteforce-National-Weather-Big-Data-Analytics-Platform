@@ -1,0 +1,390 @@
+.climate-login {
+  color-scheme: dark;
+  background: #060c13;
+  color: #e5edf2;
+  grid-template-columns: minmax(0, 1.2fr) minmax(420px, 1fr);
+  font-family: inherit;
+  min-height: 100svh;
+}
+.climate-scene {
+  position: relative;
+  overflow: hidden;
+  padding: 42px 48px 28px;
+  min-height: 850px;
+  background:
+    radial-gradient(ellipse at 48% 53%, #14303c80, transparent 62%),
+    linear-gradient(135deg, #0b1925, #050b12);
+  border-right: 1px solid #759dad20;
+  display: flex;
+  flex-direction: column;
+}
+.climate-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(#8baebb05 1px, transparent 1px),
+    linear-gradient(90deg, #8baebb05 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+}
+.climate-brand,
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: 3px;
+  font-size: 18px;
+  font-weight: 650;
+}
+.climate-brand svg,
+.auth-brand svg {
+  color: #93c1bb;
+}
+.climate-brand span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 1.8px;
+  color: #95aab9;
+  font-weight: 450;
+  margin-top: 6px;
+}
+.climate-heading {
+  position: relative;
+  z-index: 1;
+  margin-top: 57px;
+}
+.climate-kicker {
+  font-size: 9px;
+  color: #95babf;
+  letter-spacing: 2.5px;
+}
+.climate-heading h1 {
+  font-size: clamp(30px, 3.2vw, 46px);
+  letter-spacing: -1.5px;
+  line-height: 1.2;
+  font-weight: 450;
+  margin: 17px 0;
+}
+.climate-heading em {
+  font-style: normal;
+  color: #97b9ba;
+}
+.climate-heading p {
+  color: #9aafbc;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.climate-earth {
+  position: relative;
+  width: min(640px, 115%);
+  aspect-ratio: 1;
+  margin: -75px -7.5% -28px;
+  flex-shrink: 0;
+}
+.climate-static,
+.climate-canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+}
+.climate-canvas {
+  opacity: 0;
+}
+.climate-coordinate {
+  position: absolute;
+  bottom: 18%;
+  right: 8%;
+  font-size: 8px;
+  color: #b6cace;
+  letter-spacing: 1.5px;
+  border-left: 1px solid #82aca9;
+  padding: 8px 12px;
+  background: #08131ac9;
+}
+.climate-coordinate span {
+  display: block;
+  font-size: 7px;
+  color: #7793a2;
+  margin-top: 7px;
+}
+.climate-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  position: relative;
+  margin-top: auto;
+  padding: 0 0 24px;
+  border-bottom: 1px solid #759dad25;
+}
+.climate-signals span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: #9aafb9;
+}
+.climate-signals svg {
+  color: #719ba3;
+}
+.climate-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 17px;
+  font-size: 9px;
+  color: #879eac;
+}
+.climate-access {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 42px 36px;
+  background: radial-gradient(ellipse at 70% 40%, #13283840, transparent 65%);
+}
+.climate-access-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8da9b1;
+  font-size: 9px;
+  letter-spacing: 1.7px;
+  margin-bottom: 23px;
+}
+.climate-login .login-form {
+  width: 100%;
+  max-width: 440px;
+  padding: 34px;
+  background: linear-gradient(145deg, #14212bdd, #0a141ddd);
+  border: 1px solid #91b4c02c;
+  border-radius: 14px;
+  box-shadow:
+    0 25px 65px #0005,
+    inset 0 1px #c9e6ef09;
+  backdrop-filter: blur(12px);
+  animation: auth-arrive 0.65s ease-out both;
+}
+.climate-login .auth-platform {
+  color: #9cafbd;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 13px 0 25px;
+}
+.auth-divider {
+  height: 1px;
+  background: #93b2c123;
+  margin-bottom: 27px;
+}
+.climate-login .eyebrow {
+  color: #96b5ba;
+  font-size: 8px;
+  letter-spacing: 1.7px;
+}
+.climate-login .login-form h2 {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  font-weight: 500;
+  margin: 12px 0 10px;
+}
+.climate-login .login-form > p:not(.auth-platform) {
+  color: #9fafbd;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+.climate-login .auth-methods {
+  gap: 4px;
+  padding: 4px;
+  background: #060e16;
+  border: 1px solid #8aadb41a;
+  border-radius: 7px;
+  margin: 22px 0;
+}
+.climate-login .auth-methods button {
+  background: transparent;
+  color: #97adbb;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 9px 5px;
+  font-size: 11px;
+}
+.climate-login .auth-methods button[aria-pressed="true"] {
+  background: #1c303b;
+  color: #d9e8e9;
+  border-color: #789da431;
+}
+.climate-login .login-form label,
+.climate-login .otp-fieldset legend {
+  color: #becdd7;
+  font-size: 11px;
+}
+.climate-login .login-form input {
+  background: #07111b;
+  border: 1px solid #7b9baa40;
+  border-radius: 6px;
+  color: #ecf4f7;
+  min-height: 45px;
+}
+.climate-login .login-form input::placeholder {
+  color: #718793;
+}
+.climate-login :is(button, input):focus-visible {
+  outline: 2px solid #addad2;
+  outline-offset: 3px;
+}
+.climate-login .login-form input:focus {
+  border-color: #90bdb6;
+}
+.climate-login .login-form .primary {
+  background: #a9d1c7;
+  color: #0a2527;
+  border: 1px solid #c1dfd5;
+  font-size: 12px;
+  font-weight: 650;
+  border-radius: 6px;
+  min-height: 46px;
+  transition: background 0.2s;
+}
+.climate-login .login-form .primary:hover:enabled {
+  background: #c1e0d5;
+}
+.climate-login button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.climate-login .login-note {
+  font-size: 10px;
+  color: #9bafbd;
+  margin: 20px 0;
+  line-height: 1.8;
+}
+.climate-login form .login-note {
+  margin: 0;
+}
+.climate-login .error {
+  color: #f0b3aa;
+  background: #60251e33;
+  padding: 10px;
+  border: 1px solid #bb796342;
+  border-radius: 5px;
+  line-height: 1.6;
+}
+.climate-login .text-button {
+  color: #bad4d3;
+  font-size: 11px;
+  padding: 18px 0 0;
+  border-top: 1px solid #789bab26;
+  width: 100%;
+  justify-content: space-between;
+}
+.climate-access-footer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #889fab;
+  font-size: 9px;
+  margin-top: 22px;
+}
+@keyframes auth-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 1500px) {
+  .climate-scene {
+    padding-left: 70px;
+  }
+  .climate-earth {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media (max-width: 1050px) {
+  .climate-login {
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 1fr);
+  }
+  .climate-scene {
+    padding: 32px 28px;
+  }
+  .climate-access {
+    padding: 30px 20px;
+  }
+  .climate-login .login-form {
+    padding: 28px;
+  }
+  .climate-earth {
+    margin-top: -15px;
+  }
+  .climate-caption {
+    flex-direction: column;
+  }
+}
+@media (max-width: 760px) {
+  .climate-login {
+    display: flex;
+    flex-direction: column;
+  }
+  .climate-access {
+    order: 0;
+    padding: 30px 18px 22px;
+    min-height: 100svh;
+  }
+  .climate-scene {
+    order: 1;
+    min-height: 0;
+    padding: 25px;
+    border-top: 1px solid #759dad20;
+    border-right: 0;
+  }
+  .climate-brand,
+  .climate-heading,
+  .climate-earth {
+    display: none;
+  }
+  .climate-signals {
+    justify-content: center;
+    gap: 15px;
+  }
+  .climate-caption {
+    flex-direction: row;
+    justify-content: center;
+    font-size: 8px;
+  }
+  .climate-login .login-form {
+    padding: 27px 23px;
+    backdrop-filter: none;
+  }
+  .climate-login .login-form h2 {
+    font-size: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .climate-login *,
+  .climate-login *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+/* Keep dashboard main-element defaults outside the authentication gateway. */
+main.climate-login {
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+}
+.climate-login .text-button:hover {
+  background: transparent;
+  color: #e0eee9;
+}
+.climate-login .auth-methods button:hover:enabled {
+  background: #203441;
+  color: #e0eee9;
+}

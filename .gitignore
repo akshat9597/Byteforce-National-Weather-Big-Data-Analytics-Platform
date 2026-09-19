@@ -1,0 +1,26 @@
+node_modules/
+.next/
+.venv/
+__pycache__/
+.pytest_cache/
+*.db
+.env
+uploads/
+.sites-runtime/
+
+.next-dev/
+*.tsbuildinfo
+.local/
+
+# Local secrets and generated files
+.env.*
+!.env.example
+.DS_Store
+*.db-*
+*.sqlite
+*.sqlite3
+.ruff_cache/
+sources/
+output/
+tmp/
+.chart-data-*

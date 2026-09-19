@@ -1,0 +1,55 @@
+export type WeatherEvent = {
+  id: string;
+  event_type: string;
+  latitude: number;
+  longitude: number;
+  city: string;
+  district: string;
+  state: string;
+  severity: string;
+  confidence: number;
+  verification_status: string;
+  first_detected: string;
+  last_updated: string;
+  report_count: number;
+  status: string;
+};
+export type Report = {
+  id: string;
+  source_type: string;
+  source_name: string;
+  text: string;
+  event_type: string;
+  latitude: number;
+  longitude: number;
+  city: string;
+  district: string;
+  state: string;
+  timestamp: string;
+  media_url: string;
+  ai_confidence: number;
+  trust_score: number;
+  verification_status: string;
+  severity: string;
+  event_id: string;
+  duplicate_group_id: string;
+  created_at: string;
+};
+export type User = {
+  last_login_at?: string | null;
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  organization: string;
+};
+export type Alert = {
+  id: string;
+  event_id: string;
+  level: string;
+  message: string;
+  status: string;
+  created_at: string;
+  assigned_to: string;
+  event: WeatherEvent;
+};
