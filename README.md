@@ -1,257 +1,264 @@
+<div align="center">
+
 # BYTEFORCE
 
-**National Weather Intelligence & Analytics Platform**
+### National Weather Intelligence & Analytics Platform
 
-BYTEFORCE is a locally runnable operational weather workspace for India. It connects citizen observations, simulated source feeds, geospatial event fusion, evidence-based verification and analytical views in one persistent application.
+**Observe · Analyse · Verify · Respond**
 
-The interface uses a dark operational sidebar, restrained status colours, national map, dense report tables and accountable review workflows. It is not affiliated with IMD or any government agency.
+A weather intelligence workspace for India: geospatial monitoring, citizen observations,
+consolidated events and evidence-based verification in one application.
 
-## Features
+[UI tour](#ui-tour) · [Quick start](#quick-start) · [Architecture](#architecture) · [API](#api) · [Development guide](docs/DEVELOPMENT.md)
 
-- Overview with live calculated KPIs, national event map, priority alerts and source charts.
-- Live incoming reports with pause/resume, status/source search and CSV/JSON exports.
-- Leaflet/OpenStreetMap map, severity markers, clustering, density layer and verification filters.
-- Consolidated events, associated reports, confidence, source diversity and activity charts.
-- Citizen reporting with coordinate capture, observation time, optional contact details, anonymity and image/video upload.
-- Classification, trust scoring, lexical duplicate detection and configurable spatial/temporal event fusion.
-- Verification queue, reasoned rejection, suspicious flags, merging and durable audit history.
-- Social feed simulation, hashtag filtering, analytics, state/district summaries and alert response actions.
-- Role-based sign-in, user creation, editable evidence weights/fusion/alert policies and system logs.
-- Service health checks, source registry, persistent storage and WebSocket notifications.
-- 144 seeded reports across 18 Indian locations in 10 states and territories, with an optional new observation every 14 seconds.
+</div>
+
+![BYTEFORCE national overview with event map, report totals and priority alerts](docs/screenshots/overview.png)
+
+> **Data status:** The screenshots show the running application with isolated guest sample data. Weather observations, official-source records and social feeds in the development dataset are simulated. IMD integration is planned; no live government API connection or official warning service is claimed.
+
+## What it does
+
+| Workspace | Capabilities |
+| --- | --- |
+| National overview | Calculated report totals, event map, priority alerts and source distribution |
+| Geospatial monitoring | Leaflet/OpenStreetMap, severity markers, clusters, report-density layer and filters |
+| Event intelligence | Spatial/time-based report fusion, event dossiers, confidence, source diversity and lifecycle history |
+| Citizen reporting | Location, observation time, optional contact details, anonymous submissions and image/video uploads |
+| Verification centre | Evidence scoring, possible duplicates, officer decisions, reasoned rejection and audit history |
+| Analytics | Time ranges, state/district summaries, source/category distributions and CSV/JSON exports |
+| Operations | Alert handling, source registry, service health, user roles and configuration |
+| Authentication | Email OTP through Resend, password sign-in, role checks and secure session cookies |
+| Guest previews | Guest Admin and Guest Viewer, both read-only and isolated from production data |
+
+## UI tour
+
+Actual application screenshots captured on 20 September 2026. All names and observations shown belong to the sample workspace. Open an image to inspect it at full resolution.
+
+### Sign-in and guest access
+
+The original navy-and-white login supports email OTP, password sign-in and two guest previews. No email is required for a guest session.
+
+![BYTEFORCE login with email verification, password and Guest Admin / Guest Viewer buttons](docs/screenshots/login.png)
+
+<details>
+<summary><strong>National weather map</strong> — geographic filters, severity and event clusters</summary>
+
+![National weather map showing simulated weather events across India](docs/screenshots/national-map.png)
+
+The map displays report locations and consolidated events. Density indicates report concentration, not measured rainfall intensity. OpenStreetMap attribution remains visible in the application.
+
+</details>
+
+<details>
+<summary><strong>Analytics</strong> — reporting trends and source/category comparisons</summary>
+
+![Weather analytics with date-range filters and charts from the sample dataset](docs/screenshots/analytics.png)
+
+Explore 24 hours, 7 days, 30 days or a custom range. Counts reflect the selected dataset, not national coverage claims.
+
+</details>
+
+<details>
+<summary><strong>Live monitoring interface</strong> — incoming reports and export controls</summary>
+
+![Incoming weather reports table with severity, trust score and verification status](docs/screenshots/monitoring.png)
+
+Regular authenticated sessions receive WebSocket notifications, with a polling fallback. Guest mode shows a static sample snapshot and does not subscribe to production updates.
+
+</details>
+
+<details>
+<summary><strong>Verification centre</strong> — review queue and evidence assessment</summary>
+
+![Verification queue alongside a selected flooding report and its evidence](docs/screenshots/verification.png)
+
+Authorised officers can verify, flag, reject or merge reports. Guest Admin can inspect the screens, but all changes are blocked by the backend.
+
+</details>
+
+<details>
+<summary><strong>Citizen reporting</strong> — structured ground observations</summary>
+
+![Citizen weather report form with event type, severity, description and reporting guidance](docs/screenshots/citizen-report.png)
+
+Capture an observation, attach supporting media and provide its location and time. Citizen reports remain unverified until reviewed. This application does not dispatch emergency services.
+
+</details>
+
+## Architecture
+
+```mermaid
+flowchart LR
+    C[Citizen observations] --> API[FastAPI validation]
+    S[Optional simulated feed] --> API
+    API --> P[Classification and trust scoring]
+    P --> F[Spatial and temporal event fusion]
+    F --> DB[(SQLAlchemy database)]
+    DB --> O[Transactional notification outbox]
+    O --> W[WebSockets / optional Redis Streams]
+    W --> UI[Next.js dashboard]
+    DB --> UI
+    UI --> V[Officer verification]
+    V --> DB
+    G[Guest login] --> D[(Separate sample database)]
+    D --> R[Read-only guest preview]
+```
+
+A report is validated, classified, scored and linked to an event. The report and notification are committed together. Officer review updates its audit trail and event confidence; connected clients then refresh their views.
+
+**Implementation boundaries:** Classification uses deterministic rules; text deduplication uses lexical similarity. Confidence is a development heuristic, not a calibrated forecast probability. PostgreSQL/PostGIS supports indexed radius queries; SQLite uses a distance-calculation fallback. See [architecture documentation](docs/ARCHITECTURE.md).
 
 ## Technology stack
 
-Frontend: Next.js 15, React 19, TypeScript, Recharts, Leaflet, OpenStreetMap, Lucide and Radix accessible dialog primitives. Styling uses a custom CSS design system rather than Tailwind/shadcn scaffolding.
+| Layer | Implemented technology |
+| --- | --- |
+| Frontend | Next.js 15, React 19, TypeScript |
+| Interface | Custom CSS design system, Lucide icons, Radix dialog primitives |
+| Maps | Leaflet, React Leaflet, OpenStreetMap, marker clustering and heat layer |
+| Charts | Recharts |
+| Backend | Python, FastAPI, Pydantic |
+| Persistence | SQLAlchemy; SQLite for local development; PostgreSQL/PostGIS configuration |
+| Authentication | JWT in HttpOnly cookies, Argon2 password hashing, Resend email OTP |
+| Realtime | WebSockets, transactional outbox; optional Redis Streams |
+| Packaging | Docker and Docker Compose |
+| Deployment targets | Vercel frontend; Render backend and PostgreSQL |
 
-Backend: FastAPI, Python, Pydantic, SQLAlchemy, PostgreSQL/PostGIS, optional Redis Streams, Argon2 and JWT sessions. SQLite is the zero-service local development fallback. Docker Compose provides PostgreSQL/PostGIS and Redis.
+Tailwind, trained transformer models, Kafka and Spark are not current runtime dependencies.
 
-## Installation and local development
+## Quick start
 
-Requirements: Node.js 22 or later, npm, Python 3.12 or later. Docker is optional.
+Requires **Node.js 22+**, **Python 3.12+** and npm. Run from the repository root.
 
-```sh
+```bash
 cp .env.example .env
-# Edit BOOTSTRAP_PASSWORD and JWT_SECRET before first start.
+```
+
+Edit `.env` and replace `BOOTSTRAP_PASSWORD`, `JWT_SECRET` and `OTP_HASH_SECRET` with your own strong values. Leave `DATABASE_URL` on SQLite for a setup without external database services.
+
+```bash
 ./scripts/dev.sh
 ```
 
-Open [the local workspace](http://localhost:3000). Sign in as `admin@byteforce.local` with your configured bootstrap password. If no bootstrap password is configured, a random password is printed once on initial database creation. Bootstrap variables only create the first account; they do not reset an existing password.
+The script installs backend dependencies, installs frontend dependencies if needed, and starts both services.
 
-For the already-running workspace delivered with this project, the local test account is `admin@byteforce.local` with password `Byteforce-Local-2026!`. This is a development-only account, not a deployment credential.
+- **Application:** <http://localhost:3000>
+- **API documentation:** <http://localhost:8000/docs>
+- **Guest preview:** select **Guest Admin** or **Guest Viewer** on the login page.
+- **Initial administrator:** `admin@byteforce.local`, using the bootstrap password you configured. Bootstrap settings do not reset an existing account.
 
-### Backend setup separately
+Guest previews use one-hour sessions and a separate temporary sample database. They cannot change records or expose real user accounts, uploads or realtime reports. Set `GUEST_LOGIN_ENABLED=false` on the backend to disable them.
 
-```sh
-python3 -m venv .venv
-.venv/bin/pip install -r backend/requirements.txt
-# Export environment variables or load .env in your shell.
-.venv/bin/uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+### Email OTP
+
+Configure these values on the backend only:
+
+```dotenv
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=your-private-key
+EMAIL_FROM="BYTEFORCE <your-verified-sender@example.com>"
+OTP_EXPIRY_MINUTES=5
+OTP_RESEND_COOLDOWN_SECONDS=45
 ```
 
-### Frontend setup separately
+Set an independent `OTP_HASH_SECRET` as well. New users receive the **Viewer** role only after verifying their email. Existing users retain their roles. OTP expiry, single use, attempt limits and resend cooldown are enforced server-side. Password and guest login remain available without email delivery configuration.
 
-```sh
-npm ci --prefix frontend
-npm run dev --prefix frontend
-```
+See the [email setup and security details](docs/DEVELOPMENT.md#email-otp-sign-in-with-resend) for test-sender restrictions, migrations and cleanup. Never commit `.env`, private keys or database credentials.
 
-The frontend proxies REST calls to `http://127.0.0.1:8000`. WebSockets connect to the same browser hostname on port 8000 by default. Set the frontend environment variables before building if using a reverse proxy or remote backend.
+### Docker
 
-### Database setup
+Set your secrets and a URL-safe `POSTGRES_PASSWORD` in `.env`, then run:
 
-The API creates its tables and seeds only an empty database. SQLite persists to `byteforce.db`. For PostgreSQL, configure `DATABASE_URL=postgresql+psycopg://user:password@host:5432/byteforce`. Startup installs PostGIS geography columns and indexes from `backend/app/database/postgis.sql`; the database role must be authorised to install PostGIS, or an administrator should provision it first.
-
-District boundary geometry storage and query examples are included. Licensed boundary data must be loaded separately. Generated point geography supports indexed radius searches; SQLite falls back to haversine distance.
-
-## Running with Docker
-
-```sh
-cp .env.example .env
-# Set strong BOOTSTRAP_PASSWORD, JWT_SECRET and a URL-safe POSTGRES_PASSWORD.
+```bash
 docker compose up --build
 ```
 
-Compose starts the frontend on 3000, backend on 8000, PostGIS and Redis. Database and Redis ports are not exposed to the host. Named volumes persist database, stream and upload data. This Compose file is configured for local HTTP; production HTTPS must set `APP_ENV=production` and appropriate allowed origins.
+Compose supplies the frontend, backend, PostgreSQL/PostGIS and Redis, with persistent database and upload volumes. Its defaults target local HTTP development; production needs HTTPS and appropriate cookie/origin configuration.
 
-## Environment variables
+## Configuration and deployment
 
-| Variable | Purpose |
-| --- | --- |
-| `DATABASE_URL` | SQLAlchemy database URL; SQLite by default |
-| `BOOTSTRAP_PASSWORD` | Initial administrator password |
-| `JWT_SECRET` | Persistent signing secret; mandatory in production |
-| `APP_ENV` | Set `production` for Secure session cookies |
-| `ALLOWED_ORIGINS` | Comma-separated browser origins |
-| `SIMULATE_FEED` | `true` generates reports every 14 seconds |
-| `REDIS_URL` | Optional Redis Streams publisher |
-| `UPLOAD_DIR` | Server-side media directory |
-| `API_INTERNAL_URL` | Frontend server's REST backend URL |
-| `NEXT_PUBLIC_WS_URL` | Browser WebSocket URL; set at build time |
-| `POSTGRES_PASSWORD` | Compose database password |
+| Setting | Where | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Backend | Persistent SQLAlchemy connection string |
+| `JWT_SECRET`, `OTP_HASH_SECRET` | Backend | Independent persistent authentication secrets |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Backend | Email delivery credentials and sender |
+| `APP_ENV=production` | Backend | Enable Secure cookies over HTTPS |
+| `ALLOWED_ORIGINS` | Backend | Exact frontend origins, comma-separated |
+| `GUEST_LOGIN_ENABLED` | Backend | Enable/disable isolated guest previews |
+| `SIMULATE_FEED` | Backend | Enable/disable development report generation |
+| `API_INTERNAL_URL` | Frontend server/build | Backend URL used by the same-origin REST proxy |
+| `NEXT_PUBLIC_WS_URL` | Frontend build | Public WebSocket URL |
 
-## API documentation
+For the existing Vercel/Render deployment arrangement, build the frontend from `frontend/` and run the API from `backend/`. Keep database credentials and email secrets on the backend. Use **one API worker** until distributed stream fan-out is implemented. Persist uploads and configure database backups before relying on hosted storage.
 
-[Interactive OpenAPI documentation](http://localhost:8000/docs) is served by FastAPI. Sign in through the browser first for cookie-authenticated calls, or use `/api/auth/login` with a cookie-preserving API client.
+Detailed manual setup, database provisioning, API examples and deployment constraints are in the [development and operations guide](docs/DEVELOPMENT.md). The screenshots document the local code; they do not certify the current hosted deployment status.
+
+## API
+
+FastAPI provides the full schema at `/docs`. Representative endpoints:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| GET | `/api/events`, `/api/events/{id}` | Event list and detail |
-| GET | `/api/reports` | Search reports, optionally by radius |
-| POST | `/api/reports`, `/api/citizen-reports` | Citizen observation intake |
-| POST | `/api/ml/classify` | Deterministic classification |
-| POST | `/api/verification/analyse` | Evidence scoring |
-| GET | `/api/reports/{id}/evidence` | Evidence, duplicates, audit history |
-| POST | `/api/reports/{id}/verify`, `/reject` | Officer decisions |
-| POST | `/api/reports/{id}/merge`, `/keep-separate` | Duplicate review |
-| GET | `/api/analytics/overview`, `/states`, `/verification-time` | Analytics |
-| GET | `/api/map/events` | Map-ready events |
-| GET | `/api/sources/status`, `/api/health` | Operations |
-| GET/PATCH | `/api/alerts`, `/api/alerts/{id}` | Alert workflow |
-| GET/POST | `/api/admin/users` | User management |
-| GET/PATCH | `/api/admin/configuration` | Evidence and fusion policy |
-| GET | `/api/admin/audit`, `/api/admin/logs` | Audit history |
-| POST/GET | `/api/media`, `/api/media/{name}` | Media storage/retrieval |
-| WS | `/ws` | Authenticated report notifications |
+| POST | `/api/auth/send-otp`, `/api/auth/verify-otp` | Passwordless login |
+| POST | `/api/auth/login`, `/api/auth/guest` | Password or isolated guest login |
+| GET / POST | `/api/auth/me` / `/api/auth/logout` | Current identity / sign out |
+| GET | `/api/events`, `/api/events/{id}` | Event registry and dossier |
+| GET | `/api/reports` | Report search and radius filtering |
+| POST | `/api/citizen-reports` | Observation intake |
+| POST | `/api/reports/{id}/verify` | Officer verification |
+| GET | `/api/analytics/overview` | Calculated analytics |
+| GET | `/api/sources/status` | Source registry |
+| WS | `/ws` | Authenticated update notifications |
 
-## AI/ML architecture and data pipeline
-
-The initial classifier is deterministic and isolated behind `classify(text)`. Text deduplication uses lexical similarity. Image forensic verification, sentence embeddings and calibrated confidence models are not installed. The UI identifies these limits and does not label low-confidence observations as fake.
-
-The pipeline validates, classifies, scores, spatially correlates and persists a report together with a durable notification in one transaction. A bounded outbox dispatcher retries failed delivery with exponential backoff. Alert actions are audited and broadcast to other clients. Officers independently verify evidence. Verification changes recalculate event confidence and trigger UI refreshes. See [architecture documentation](docs/ARCHITECTURE.md) for the data flow and scaling boundaries.
-
-Official-source records, social feeds and connector statuses are development simulations. There are no connected government APIs, live social accounts or issued public warnings. Rainfall density is a report-density visualisation, not measured precipitation.
-
-## Folder structure
+## Repository structure
 
 ```text
-frontend/
-  app/          # Next.js routes and shared theme
-  components/   # Shell, map, charts, tables and accessible drawers
-  features/     # Domain screens and workflows
-  services/     # Typed API client and exports
-  hooks/        # REST/WebSocket data lifecycle
-  types/        # Shared domain types
+frontend/             Next.js routes, reusable components and domain screens
 backend/app/
-  api/          # Authentication and role dependencies
-  models/       # SQLAlchemy entities
-  schemas/      # Pydantic payloads
-  services/     # Intake, seed, fusion and configuration
-  ml/           # Classification abstraction
-  verification/ # Evidence scoring and duplicate similarity
-  streaming/    # WebSocket/Redis publisher
-  database/     # Sessions, PostGIS migration and spatial adapter
-scripts/        # Development and seed commands
-docker/         # Application images
-docs/           # Architecture and operating notes
-tests/          # API lifecycle and security integration tests
+  api/                Authentication, accounts and event workflows
+  database/           Sessions, migrations and PostGIS support
+  models/             SQLAlchemy entities
+  schemas/            Validated API payloads
+  services/           Intake, event fusion, OTP, guest data and configuration
+  ml/                 Replaceable classification module
+  verification/       Evidence scoring and duplicate detection
+  streaming/          WebSocket hub and notification outbox
+docs/
+  screenshots/        UI images used in this README
+scripts/              Local startup, seeding and cleanup utilities
+docker/               Application Dockerfiles
+tests/                Workflow, authentication and analytics tests
 ```
 
 ## Validation
 
-```sh
-.venv/bin/pytest -q tests
+```bash
+.venv/bin/python -m pytest tests -q
+node --test tests/test_analytics.mjs
 npm run build --prefix frontend
 ```
 
-Tests cover flood intake through WebSocket delivery and verification, confidence/analytics changes, role enforcement, invalid input, required rejection reasons, origin enforcement, duplicates, merging, media validation and radius lookup. Browser checks cover sign-in, navigation and reporting/review flows. Docker/PostGIS must be separately exercised on a host with Docker available.
+Coverage includes report intake, event fusion, verification, outbox delivery, OTP failures and expiry, role enforcement, guest isolation, logout and analytics date ranges. PostgreSQL concurrency and Docker deployment require checks against their target infrastructure.
 
-## Future scaling and production readiness
+## Roadmap and operational limits
 
-The application is a working development system with a production-style interface and modular service boundaries. Before use for operational public safety, connect licensed authoritative feeds, validate confidence models, run load/security/accessibility reviews, import district boundaries, introduce managed identity and media scanning, and configure backups, retention and monitoring.
+- Authorised official weather providers and historical ingestion adapters.
+- Licensed district boundaries and richer station-level data.
+- Trained classification/embedding models and validated media evidence checks.
+- Distributed consumers, independent ingestion workers and national-scale pagination.
+- Managed media storage, retention policies, backups and load/security reviews.
 
-The current broadcaster is single-worker. A transactional outbox provides at-least-once notification delivery with stable message IDs and retries. Redis persists messages but does not yet provide distributed fan-out. Distributed workers and idempotent consumer groups are the next steps before moving ingestion to Kafka, processing to Spark/Flink, retrieval to Elasticsearch and media to object storage. Tables currently return at most 5,000 recent reports; server-side cursor pagination and analytical rollups are necessary at national scale.
+BYTEFORCE is a working development platform with an operational-style interface. It is not affiliated with IMD or a government agency, and is not an official public-warning system.
 
-### Reliability regression coverage
+## Project context
 
-Additional tests cover transactional notification rollback and retry, reversing a rejection to reopen an event, archived-alert handling, correct Warning/Critical thresholds, adverse evidence exclusion and configurable evidence radius. The health API reports `outbox_pending` and `outbox_retrying`; the Streaming Service row identifies delayed delivery. This dispatcher must run in a single API worker. Delivered outbox rows are retained for inspection; a deployment-specific retention job is still required.
+Developed by **Team BYTEFORCE** for **Smart India Hackathon 2026**.
 
-## Event dossiers and response workflow
-
-Open an event from Weather Events, or choose **Open full event dossier** in a map detail panel. Every event has a protected, shareable `/weather-events/{id}` URL containing its associated reports, source distribution, related alerts and officer timeline. Export the associated reports as CSV or the complete dossier as JSON.
-
-Administrators and verification officers can add notes, resolve, archive or reopen an event. State changes require a reason and use an expected-status check to prevent conflicting officer decisions. Resolving or archiving resolves outstanding alerts for that event. Report evidence and history are retained. Subsequent report reviews do not automatically reopen an explicitly resolved or archived event.
-
-Additional endpoints:
-
-- `PATCH /api/events/{id}/status`: `{status, expected_status, reason}`.
-- `POST /api/events/{id}/notes`: `{text}`.
-- `GET /api/events/{id}` now includes timeline, related alerts and the current fusion policy.
-
-Analytics time-series charts cover 24 hours, 7 days, 30 days or a custom date range. Custom boundaries use India Standard Time, and exports contain the selected observations. The event-category chart counts distinct events. The verification-time summary is explicitly an all-time measure.
-
-Run date-range regression tests with `node --test tests/test_analytics.mjs` (Node 22.18+). Backend integration tests include event notes, lifecycle changes, related-alert resolution, conflicting updates and viewer permissions.
-
-## Email OTP sign-in with Resend
-
-BYTEFORCE reuses its FastAPI authentication, SQLAlchemy users/OTP tables, and eight-hour HttpOnly JWT cookie. Password login remains available. New users are created **only after successful email verification**, with the existing read-only **Viewer** role. Existing names, profiles and roles are preserved. An administrator must assign any elevated role. Viewer access includes the existing read-only weather reports and analytics; anonymous citizen submission remains available.
-
-### Configuration
-
-Install `backend/requirements.txt`. Set these server-only values in `.env` (or deployment secrets):
-
-```dotenv
-EMAIL_PROVIDER=resend
-RESEND_API_KEY=your-private-resend-key
-EMAIL_FROM="BYTEFORCE <onboarding@resend.dev>"
-OTP_EXPIRY_MINUTES=5
-OTP_RESEND_COOLDOWN_SECONDS=45
-OTP_HASH_SECRET=an-independent-random-secret-of-at-least-32-characters
-```
-
-Never put real keys in `.env.example`, source code, or variables prefixed `NEXT_PUBLIC_`. Keep the existing `OTP_HASH_SECRET`; rotating it invalidates pending challenges and starts new pseudonymous rate buckets. Restart the backend after changing configuration. The Python Resend SDK uses a ten-second network timeout. No provider credentials, OTPs or raw provider errors are returned to clients or logged by the adapter. The application does not fall back to SMTP when Resend fails.
-
-The sender format uses angle brackets, **not Markdown mail links**. Resend's `onboarding@resend.dev` test sender only delivers to the email associated with your Resend account. To send to other users, verify your domain in Resend and change only:
-
-```dotenv
-EMAIL_FROM="BYTEFORCE <auth@byteforce.in>"
-```
-
-See [Resend's Python guide](https://resend.com/docs/send-with-python) and [test-sender restrictions](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain). Provider acceptance is distinct from delivery, and delivery is distinct from placement in the inbox; inspect Resend's email dashboard and the recipient inbox/spam folder. A provider message ID is retained on the private OTP row for operational tracing.
-
-### API and controls
-
-- `POST /api/auth/send-otp`: `{email}`. Returns `success`, a generic message, challenge ID, `expires_in`, and `resend_after`; never the code.
-- `POST /api/auth/verify-otp`: `{email, otp}`. Consumes the newest challenge, finds/creates the account and sets the existing session cookie.
-- `GET /api/auth/me` and `POST /api/auth/logout` retain their existing roles in the application.
-- Existing `/api/auth/otp/request` and `/api/auth/otp/verify` are deprecated compatibility aliases backed by the same service, for already-open clients. They are hidden from OpenAPI and can be removed after clients migrate.
-
-Codes are generated cryptographically on the backend, with six digits and no leading zero. An HMAC-SHA256 keyed with an independent server secret protects the low-entropy code at rest; a database dump alone does not enable code guessing. Each code expires after five minutes by default, permits at most five verification attempts and is consumed atomically. Resending invalidates older requests. Codes, sessions and API keys are never logged; audit actions use a pseudonymous email subject or internal user ID. Last login is updated for both OTP and password logins.
-
-Server-enforced shared database limits are five sends per email and ten sends per IP per 15 minutes, with a 45-second cooldown. Verification is also limited to 30 attempts per email and 60 per IP per five minutes. HTTP 429 includes `Retry-After`. Database/provider failures return generic HTTP 503 errors. Incorrect, expired, exhausted and already-used codes cannot authenticate. Request bodies reject extra fields such as client-supplied roles. SQLite uses immediate transactions; PostgreSQL uses row locks. Limits are shared across app workers; the weather stream dispatcher retains its existing single-worker deployment constraint.
-
-The frontend masks the email at the code step, supports six numeric inputs, full-code paste, autofill, focus movement and backspace navigation, and keeps password login available. Unauthenticated page requests redirect to `/login?next=...`; the server checks the session with the backend, and the backend independently enforces API authentication/roles. `/submit-report` remains public. Successful login returns to the original local destination or the overview dashboard.
-
-### Database rollout and cleanup
-
-Back up the database before deployment. The idempotent additive migration adds `users.last_login_at` and `otp_challenges.email`, `created_at`, `used_at`, and `delivery_id`, without deleting users, weather data or roles. Existing OTP tables are reused.
-
-```sh
-# DATABASE_URL must point to the intended deployment database.
-PYTHONPATH=backend .venv/bin/python -m app.database.migrate_auth
-```
-
-Local backend startup also applies the migration before seeding. Existing challenges without an email still work for an existing user through the compatibility endpoint; request a new code to use the new email-based endpoint. Expired challenges and expired rate buckets older than 24 hours are deleted during new OTP requests. An optional daily job for idle installations is:
-
-```sh
-PYTHONPATH=backend .venv/bin/python scripts/cleanup_auth.py
-```
-
-Docker forwards the Resend variables only to the backend. Set `APP_ENV=production`, strong persistent secrets, correct `ALLOWED_ORIGINS`, HTTPS and `wss` endpoints in production. Configure trusted reverse proxies for accurate client IP limits; do not accept arbitrary client-supplied forwarding headers. Apply migrations before starting multiple workers. Validate PostGIS/PostgreSQL concurrency on the target infrastructure before operational rollout.
-
-### Local SMTP compatibility
-
-For offline development only, use `EMAIL_PROVIDER=smtp`, `SMTP_HOST=127.0.0.1`, `SMTP_PORT=1025`, `SMTP_SECURITY=none`, and `SMTP_FROM=no-reply@byteforce.local`. Install `backend/requirements-dev.txt` and start `.venv/bin/python scripts/dev_mail.py`. Private `.eml` files are saved under `.local/mail` and never forwarded. SMTP is retained for existing deployments; Resend is the default. The host loopback inbox is not reachable at the same address inside Docker.
-
-### Verification
-
-Run `.venv/bin/pytest -q`, `node --test tests/test_analytics.mjs`, and `npm run build --prefix frontend`. OTP tests cover success, wrong/expired/used codes, exhausted attempts, concurrent single consumption, cooldown, resend invalidation, email normalization, invalid addresses, role injection, provider/database failures, account creation, role preservation, logout, protected APIs, rate limits, cleanup and migration preservation. See `docs/email-otp.md` for current acceptance evidence and limitations.
-
-## Account management
-
-Settings now lets signed-in users edit their display name. Email, organisation and role cannot be changed through this profile endpoint. Updates are recorded in System Logs. Admin → User Management shows last sign-in and provides role changes with a required reason. Existing sessions read current permissions from the database on each API request. Self-role changes are blocked; a second administrator must make them. Expected-role checks prevent stale edits, and serialized role decisions prevent concurrent administrators from demoting one another after losing permission. Actual privileged assignments are always administrator actions.
-
-- `PATCH /api/auth/profile`: `{name}`.
-- `PATCH /api/admin/users/{id}/role`: `{role, expected_role, reason}`.
-
-Expired sessions detected by operational API requests redirect to login with an explanatory message and the original destination. No database migration is required for these controls. Account tests cover profile-field restrictions, audit logging, role changes, stale edits, self-demotion protection, immediate backend permission changes and concurrent role changes on SQLite. PostgreSQL concurrency should be validated on deployment infrastructure.
+| Field | Detail |
+| --- | --- |
+| Problem statement | SIH26069 — National Weather Big Data Analytics Platform |
+| Organisation named in the problem statement | Ministry of Earth Sciences / India Meteorological Department |
+| Theme | Disaster Management |
+| Category | Software |
+| Team ID | GITAM024 |
+| Institute | GITAM (Deemed to be University), Visakhapatnam |
