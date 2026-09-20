@@ -17,6 +17,14 @@ consolidated events and evidence-based verification in one application.
 
 > **Data status:** The screenshots show the running application with isolated guest sample data. Weather observations, official-source records and social feeds in the development dataset are simulated. IMD integration is planned; no live government API connection or official warning service is claimed.
 
+## The problem
+
+Weather information is spread across forecasts, warnings, station observations,
+rainfall products, satellite/radar products and citizen reports. Different formats
+and disconnected views make geographic comparison and evidence review difficult.
+BYTEFORCE brings report intake, maps, event correlation and verification into a
+single workspace, with authoritative external feeds remaining a planned integration.
+
 ## What it does
 
 | Workspace | Capabilities |
