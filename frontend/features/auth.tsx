@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { api, ApiError } from "@/services/api";
 import { OTPInput } from "@/components/otp-input";
 import type { User } from "@/types";
-import { ClimateScene } from "@/components/climate/scene";
-import "./auth.css";
 type Challenge = {
   challenge_id: string;
   message: string;
@@ -27,6 +25,28 @@ export function Login({
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
+  const [guestEnabled, setGuestEnabled] = useState(false);
+  const [guestRole, setGuestRole] = useState<string | null>(null);
+  useEffect(() => {
+    api<{ enabled: boolean }>("/auth/guest-options")
+      .then((options) => setGuestEnabled(options.enabled))
+      .catch(() => setGuestEnabled(false));
+  }, []);
+  async function guestLogin(role: "Administrator" | "Viewer") {
+    setBusy(true);
+    setGuestRole(role);
+    setError("");
+    try {
+      onLogin(await api<User>("/auth/guest", {
+        method: "POST", body: JSON.stringify({ role }),
+      }));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+      setGuestRole(null);
+    }
+  }
   const [resendAt, setResendAt] = useState(0),
     [expiresAt, setExpiresAt] = useState(0),
     [clock, setClock] = useState(Date.now());
@@ -63,34 +83,19 @@ export function Login({
     }
   }
   return (
-    <main className="login-screen climate-login">
-      <ClimateScene />
-      <section className="climate-access" aria-label="Secure sign in">
-        <div className="climate-access-label">
-          <ShieldCheck size={14} /> SECURE PLATFORM ACCESS
-        </div>
-        <div className="login-form">
-          <div className="auth-brand">
-            <Radar size={27} />
-            <span>BYTEFORCE</span>
-          </div>
-          <p className="auth-platform">
-            National Weather Intelligence
-            <br />
-            &amp; Analytics Platform
-          </p>
-          <div className="auth-divider" />
+    <main className="login-screen">
+      <section className="login-context" aria-label="BYTEFORCE platform">
+        <Radar size={48} />
+        <h1>BYTEFORCE</h1>
+        <span>WEATHER INTELLIGENCE PLATFORM</span>
+        <h2>A clearer view.<br />A coordinated response.</h2>
+        <p>Real-time weather intelligence, verified reports and national-scale situational awareness in one operational workspace.</p>
+        <div><ShieldCheck size={16} /> Secure access for authorised personnel</div>
+      </section>
+      <section className="login-form" aria-label="Secure sign in">
           <span className="eyebrow">YOUR OPERATIONAL WORKSPACE</span>
-          <h2>
-            {mode === "otp" && challenge
-              ? "Check your inbox"
-              : "Welcome to BYTEFORCE"}
-          </h2>
-          <p>
-            {mode === "otp" && challenge
-              ? "Enter your verification code to continue securely."
-              : "Sign in to access your weather intelligence workspace."}
-          </p>
+          <h2>{mode === "otp" && challenge ? "Check your inbox" : "Sign in to your workspace"}</h2>
+          <p>{mode === "otp" && challenge ? "Enter your verification code to continue securely." : "Sign in with your email address to continue."}</p>
           <div className="auth-methods" aria-label="Sign-in method">
             {(["otp", "password"] as const).map((value) => (
               <button
@@ -240,13 +245,23 @@ export function Login({
             First-time users receive read-only Viewer access after verifying
             their email. Staff permissions are assigned by an administrator.
           </div>
+          {guestEnabled && (
+            <section className="guest-access" aria-label="Guest access">
+              <h3>Explore as a guest</h3>
+              <p>Read-only preview with sample weather data. No email required.</p>
+              <div className="auth-methods">
+                <button type="button" disabled={busy} onClick={() => guestLogin("Administrator")}>
+                  {guestRole === "Administrator" ? "Opening preview…" : "Guest Admin"}
+                </button>
+                <button type="button" disabled={busy} onClick={() => guestLogin("Viewer")}>
+                  {guestRole === "Viewer" ? "Opening preview…" : "Guest Viewer"}
+                </button>
+              </div>
+            </section>
+          )}
           <button className="text-button" onClick={onCitizen}>
             Submit a citizen weather report <ArrowRight size={15} />
           </button>
-        </div>
-        <p className="climate-access-footer">
-          <ShieldCheck size={13} /> Email verification · Role-based access
-        </p>
       </section>
     </main>
   );

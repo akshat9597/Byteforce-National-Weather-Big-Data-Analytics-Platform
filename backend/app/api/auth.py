@@ -10,9 +10,13 @@ if os.getenv("APP_ENV") == "production" and not os.getenv("JWT_SECRET"):
     raise RuntimeError("JWT_SECRET is required in production")
 
 
-def token(user):
+def token(user, guest=False):
     return jwt.encode(
-        {"sub": user.id, "exp": datetime.now(timezone.utc) + timedelta(hours=8)},
+        {
+            "sub": user.id,
+            "guest": guest,
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1 if guest else 8),
+        },
         SECRET,
         algorithm="HS256",
     )
@@ -43,12 +47,12 @@ reviewer = require("Administrator", "Verification Officer")
 admin = require("Administrator")
 
 
-def set_session(response, user):
+def set_session(response, user, guest=False):
     response.set_cookie(
         "byteforce_session",
-        token(user),
+        token(user, guest=guest),
         httponly=True,
         samesite="lax",
         secure=os.getenv("APP_ENV") == "production",
-        max_age=28800,
+        max_age=3600 if guest else 28800,
     )

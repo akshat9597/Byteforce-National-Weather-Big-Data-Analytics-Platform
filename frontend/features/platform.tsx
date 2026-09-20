@@ -86,10 +86,17 @@ export default function Platform({
       window.removeEventListener("byteforce-session-expired", expired);
   }, []);
   useEffect(() => {
-    api<User>("/auth/me")
-      .then(setUser)
-      .catch(() => {})
-      .finally(() => setReady(true));
+    let disposed = false;
+    const controller = new AbortController();
+    // Public entry points must remain usable even while the API is waking up.
+    if (location.pathname === "/login" || location.pathname === "/submit-report") {
+      setReady(true);
+    } else {
+      api<User>("/auth/me", { signal: controller.signal, timeoutMs: 8000 })
+        .then((identity) => { if (!disposed) setUser(identity); })
+        .catch(() => {})
+        .finally(() => { if (!disposed) setReady(true); });
+    }
     const readRoute = () => {
       const slug = location.pathname.slice(1) || location.hash.slice(1);
       const eventMatch = location.pathname.match(/^\/weather-events\/([^/]+)$/);
@@ -112,7 +119,11 @@ export default function Platform({
     window.addEventListener("popstate", readRoute);
     document.documentElement.dataset.density =
       localStorage.getItem("byteforce-density") || "Standard";
-    return () => window.removeEventListener("popstate", readRoute);
+    return () => {
+      disposed = true;
+      controller.abort();
+      window.removeEventListener("popstate", readRoute);
+    };
   }, []);
   const navigate = (s: string) => {
     setDetailId("");
@@ -350,6 +361,12 @@ export default function Platform({
         location.replace("/login");
       }}
     >
+      {user.is_guest && (
+        <div className="guest-banner" role="status">
+          <strong>Guest {user.role} preview</strong> · Sample data only. Changes are disabled.
+          Sign out to access your own account.
+        </div>
+      )}
       <div className="breadcrumb">
         Workspace <ChevronRight size={12} /> <span>{page}</span>
       </div>
@@ -449,7 +466,7 @@ export default function Platform({
           </button>
           <div className="filter-live">
             <i className={data.live ? "live-dot" : "amber-dot"} />
-            {data.live ? "LIVE UPDATES" : "RECONNECTING"}
+            {user.is_guest ? "SAMPLE SNAPSHOT" : data.live ? "LIVE UPDATES" : "RECONNECTING"}
           </div>
         </div>
       )}

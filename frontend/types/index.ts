@@ -36,6 +36,7 @@ export type Report = {
   created_at: string;
 };
 export type User = {
+  is_guest?: boolean;
   last_login_at?: string | null;
   id: string;
   name: string;

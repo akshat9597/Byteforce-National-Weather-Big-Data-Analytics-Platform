@@ -10,38 +10,60 @@ export class ApiError extends Error {
 }
 export async function api<T = any>(
   path: string,
-  options: RequestInit = {},
+  options: RequestInit & { timeoutMs?: number } = {},
 ): Promise<T> {
-  const r = await fetch("/api" + path, {
-    credentials: "include",
-    ...options,
-    headers: {
-      ...(options.body instanceof FormData
-        ? {}
-        : { "Content-Type": "application/json" }),
-      ...options.headers,
-    },
-  }).catch(() => {
+  const { timeoutMs = 15000, signal, ...request } = options;
+  const controller = new AbortController();
+  let timedOut = false;
+  const cancel = () => controller.abort();
+  if (signal?.aborted) cancel();
+  else signal?.addEventListener("abort", cancel, { once: true });
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  try {
+    const r = await fetch("/api" + path, {
+      credentials: "include",
+      ...request,
+      signal: controller.signal,
+      headers: {
+        ...(options.body instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
+        ...options.headers,
+      },
+    });
+    if (r.status === 401 && !path.startsWith("/auth/")) {
+      window.dispatchEvent(new Event("byteforce-session-expired"));
+    }
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({
+        detail: "The service is temporarily unavailable. Please try again.",
+      }));
+      if (controller.signal.aborted) throw new Error("Request aborted");
+      throw new ApiError(
+        typeof e.detail === "string" ? e.detail : "Please check the form fields.",
+        r.status,
+        Number(r.headers.get("Retry-After")) || 0,
+      );
+    }
+    return await r.json();
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
     throw new ApiError(
-      "Unable to connect. Check your connection and try again.",
+      timedOut
+        ? "The server is taking longer than expected. Please try again shortly."
+        : signal?.aborted
+          ? "Request cancelled."
+          : "Unable to connect. Check your connection and try again.",
       0,
       0,
     );
-  });
-  if (r.status === 401 && !path.startsWith("/auth/")) {
-    window.dispatchEvent(new Event("byteforce-session-expired"));
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", cancel);
   }
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({
-      detail: "Weather data service temporarily unavailable",
-    }));
-    throw new ApiError(
-      typeof e.detail === "string" ? e.detail : "Please check the form fields.",
-      r.status,
-      Number(r.headers.get("Retry-After")) || 0,
-    );
-  }
-  return r.json();
 }
 export function download(
   rows: object[],

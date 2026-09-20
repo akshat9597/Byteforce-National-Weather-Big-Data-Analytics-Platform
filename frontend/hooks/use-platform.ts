@@ -33,7 +33,7 @@ export function usePlatform(user: User | null) {
     refresh();
   }, [refresh]);
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.is_guest) return;
     let socket: WebSocket;
     let timer: ReturnType<typeof setTimeout>;
     let disposed = false;

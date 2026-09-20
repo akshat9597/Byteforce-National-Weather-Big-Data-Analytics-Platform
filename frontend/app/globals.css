@@ -2598,3 +2598,10 @@ td small {
   font-size: 23px;
   padding: 12px 0;
 }
+
+/* Guest previews share the existing login and workspace design. */
+.guest-access { margin-top: 22px; border-top: 1px solid #dbe3eb; padding-top: 18px; }
+.guest-access h3 { font-size: 16px; margin: 0 0 6px; }
+.guest-access p { font-size: 13px; line-height: 1.5; color: #536579; }
+.guest-access .auth-methods button { min-height: 44px; }
+.guest-banner { margin-bottom: 18px; padding: 12px 16px; background: #edf5fa; color: #173b53; border: 1px solid #c5dce9; border-radius: 6px; font-size: 13px; line-height: 1.6; }

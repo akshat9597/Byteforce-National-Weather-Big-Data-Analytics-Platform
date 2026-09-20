@@ -154,9 +154,41 @@ async def safety(request, call_next):
             "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
         ).split(",")
         if origin and origin not in allowed:
-            from fastapi.responses import JSONResponse
-
             return JSONResponse({"detail": "Origin not allowed"}, status_code=403)
+    # Guest identity is signed server-side; every guest query uses a separate store.
+    request.state.guest = False
+    raw = request.cookies.get("byteforce_session")
+    if raw:
+        try:
+            claims = jwt.decode(raw, SECRET, algorithms=["HS256"])
+            request.state.guest = claims.get("guest") is True
+        except jwt.InvalidTokenError:
+            pass
+    if request.state.guest:
+        from app.services.guest import enabled
+
+        path = request.url.path
+        if not enabled() and path != "/api/auth/logout":
+            return JSONResponse(
+                {"detail": "Guest access is disabled."}, status_code=401
+            )
+        if request.method not in ("GET", "HEAD", "OPTIONS") and path not in (
+            "/api/auth/logout",
+            "/api/auth/guest",
+        ):
+            return JSONResponse(
+                {
+                    "detail": "Guest preview is read-only. Sign in with your own account to make changes."
+                },
+                status_code=403,
+            )
+        if path.startswith("/api/media/") or path == "/api/health":
+            return JSONResponse(
+                {
+                    "detail": "Production media and system health are not available in guest preview."
+                },
+                status_code=403,
+            )
     response = await call_next(request)
     record_request(request_started)
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -164,6 +196,43 @@ async def safety(request, call_next):
     if request.url.path.startswith("/api/auth/"):
         response.headers["Cache-Control"] = "no-store"
     return response
+
+
+from typing import Literal
+from pydantic import BaseModel, ConfigDict
+
+
+class GuestLogin(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    role: Literal["Administrator", "Viewer"]
+
+
+@app.get("/api/auth/guest-options")
+def guest_options():
+    from app.services.guest import enabled
+
+    return {"enabled": enabled()}
+
+
+@app.post("/api/auth/guest")
+def guest_login(data: GuestLogin, response: Response, request: Request):
+    from app.services.guest import enabled, sessions
+
+    if not enabled():
+        raise HTTPException(403, "Guest access is disabled.")
+    key = "guest:" + request.client.host
+    current = time.monotonic()
+    LOGIN_ATTEMPTS[key] = [t for t in LOGIN_ATTEMPTS[key] if current - t < 300]
+    if len(LOGIN_ATTEMPTS[key]) >= 20:
+        raise HTTPException(429, "Too many guest sessions. Try again in five minutes.")
+    LOGIN_ATTEMPTS[key].append(current)
+    with sessions()() as db:
+        user = db.get(User, "GUEST-" + data.role)
+        set_session(response, user, guest=True)
+        return {
+            **{k: v for k, v in record(user).items() if k != "password_hash"},
+            "is_guest": True,
+        }
 
 
 @app.post("/api/auth/login")
@@ -202,7 +271,7 @@ def logout(response: Response, request: Request, db: Session = Depends(get_db)):
         user = current_user(request, db)
     except HTTPException:
         user = None
-    if user:
+    if user and not getattr(request.state, "guest", False):
         audit(db, "user.logged_out", user.id)
         db.commit()
     response.delete_cookie(
@@ -215,8 +284,11 @@ def logout(response: Response, request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/api/auth/me")
-def me(u=Depends(current_user)):
-    return {k: v for k, v in record(u).items() if k != "password_hash"}
+def me(request: Request, u=Depends(current_user)):
+    return {
+        **{k: v for k, v in record(u).items() if k != "password_hash"},
+        "is_guest": getattr(request.state, "guest", False),
+    }
 
 
 @app.get("/api/events")
@@ -709,7 +781,11 @@ def media(name: str, u=Depends(current_user)):
 @app.websocket("/ws")
 async def websocket(ws: WebSocket):
     try:
-        jwt.decode(ws.cookies.get("byteforce_session"), SECRET, algorithms=["HS256"])
+        claims = jwt.decode(
+            ws.cookies.get("byteforce_session"), SECRET, algorithms=["HS256"]
+        )
+        if claims.get("guest") is True:
+            raise ValueError("Guest sessions cannot subscribe to production reports")
         if ws.headers.get("origin") not in os.getenv(
             "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
         ).split(","):
