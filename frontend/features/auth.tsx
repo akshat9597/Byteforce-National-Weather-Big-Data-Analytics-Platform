@@ -1,87 +1,40 @@
 "use client";
-import { Radar, ArrowRight, ShieldCheck } from "lucide-react";
+import { Radar, ArrowRight, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { api, ApiError } from "@/services/api";
-import { OTPInput } from "@/components/otp-input";
+import { api } from "@/services/api";
 import type { User } from "@/types";
-type Challenge = {
-  challenge_id: string;
-  message: string;
-  expires_in: number;
-  resend_after: number;
-};
-export function Login({
-  onLogin,
+
+export function WorkspaceEntry({
+  onEnter,
   onCitizen,
 }: {
-  onLogin: (u: User) => void;
+  onEnter: (user: User) => void;
   onCitizen: () => void;
 }) {
-  const [email, setEmail] = useState(""),
-    [password, setPassword] = useState(""),
-    [code, setCode] = useState("");
-  const [mode, setMode] = useState<"otp" | "password">("otp");
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [guestEnabled, setGuestEnabled] = useState(false);
-  const [guestRole, setGuestRole] = useState<string | null>(null);
+  const [opening, setOpening] = useState<"Administrator" | "Viewer" | null>(null);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   useEffect(() => {
-    api<{ enabled: boolean }>("/auth/guest-options")
-      .then((options) => setGuestEnabled(options.enabled))
-      .catch(() => setGuestEnabled(false));
+    if (new URLSearchParams(location.search).get("reason") === "expired")
+      setNotice("Your preview session ended. Choose a view to continue.");
   }, []);
-  async function guestLogin(role: "Administrator" | "Viewer") {
-    setBusy(true);
-    setGuestRole(role);
+
+  async function enter(role: "Administrator" | "Viewer") {
+    if (opening) return;
+    setOpening(role);
     setError("");
     try {
-      onLogin(await api<User>("/auth/guest", {
-        method: "POST", body: JSON.stringify({ role }),
+      onEnter(await api<User>("/auth/guest", {
+        method: "POST",
+        body: JSON.stringify({ role }),
       }));
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setBusy(false);
-      setGuestRole(null);
+      setOpening(null);
     }
   }
-  const [resendAt, setResendAt] = useState(0),
-    [expiresAt, setExpiresAt] = useState(0),
-    [clock, setClock] = useState(Date.now());
-  useEffect(() => {
-    if (new URLSearchParams(location.search).get("reason") === "expired")
-      setError("Your session has expired. Sign in again to continue.");
-    const timer = setInterval(() => setClock(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-  const wait = Math.max(0, Math.ceil((resendAt - clock) / 1000));
-  const remaining = Math.max(0, Math.ceil((expiresAt - clock) / 1000));
-  async function requestCode() {
-    setBusy(true);
-    setSending(true);
-    setError("");
-    try {
-      const result = await api<Challenge>("/auth/send-otp", {
-        method: "POST",
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
-      setEmail(email.trim().toLowerCase());
-      setChallenge(result);
-      setCode("");
-      setClock(Date.now());
-      setResendAt(Date.now() + result.resend_after * 1000);
-      setExpiresAt(Date.now() + result.expires_in * 1000);
-    } catch (err) {
-      setError((err as Error).message);
-      if (err instanceof ApiError && err.retryAfter)
-        setResendAt(Date.now() + err.retryAfter * 1000);
-    } finally {
-      setBusy(false);
-      setSending(false);
-    }
-  }
+
   return (
     <main className="login-screen">
       <section className="login-context" aria-label="BYTEFORCE platform">
@@ -89,179 +42,31 @@ export function Login({
         <h1>BYTEFORCE</h1>
         <span>WEATHER INTELLIGENCE PLATFORM</span>
         <h2>A clearer view.<br />A coordinated response.</h2>
-        <p>Real-time weather intelligence, verified reports and national-scale situational awareness in one operational workspace.</p>
-        <div><ShieldCheck size={16} /> Secure access for authorised personnel</div>
+        <p>Weather intelligence, report verification and national-scale situational awareness in one operational workspace.</p>
+        <div><ShieldCheck size={16} /> Explore the weather intelligence workspace</div>
       </section>
-      <section className="login-form" aria-label="Secure sign in">
-          <span className="eyebrow">YOUR OPERATIONAL WORKSPACE</span>
-          <h2>{mode === "otp" && challenge ? "Check your inbox" : "Sign in to your workspace"}</h2>
-          <p>{mode === "otp" && challenge ? "Enter your verification code to continue securely." : "Sign in with your email address to continue."}</p>
-          <div className="auth-methods" aria-label="Sign-in method">
-            {(["otp", "password"] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={mode === value}
-                disabled={busy}
-                onClick={() => {
-                  setMode(value);
-                  setChallenge(null);
-                  setError("");
-                  setCode("");
-                }}
-              >
-                {value === "otp" ? "Email verification code" : "Password"}
-              </button>
-            ))}
-          </div>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (mode === "otp" && !challenge) {
-                await requestCode();
-                return;
-              }
-              setBusy(true);
-              setError("");
-              try {
-                onLogin(
-                  await api(
-                    mode === "otp" ? "/auth/verify-otp" : "/auth/login",
-                    {
-                      method: "POST",
-                      body: JSON.stringify(
-                        mode === "otp"
-                          ? { email, otp: code }
-                          : { email, password },
-                      ),
-                    },
-                  ),
-                );
-              } catch (err) {
-                setError((err as Error).message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {!(mode === "otp" && challenge) && (
-              <label>
-                Email address
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  autoComplete="username"
-                  value={email}
-                  disabled={busy || (mode === "otp" && !!challenge)}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </label>
-            )}
-            {mode === "password" ? (
-              <label>
-                Password
-                <input
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </label>
-            ) : (
-              challenge && (
-                <>
-                  <p className="login-note" role="status">
-                    Verification code sent to {email[0]}***@
-                    {email.split("@")[1]}
-                  </p>
-                  <OTPInput
-                    key={challenge.challenge_id}
-                    onChange={setCode}
-                    disabled={busy}
-                  />
-                  <span className="login-note">
-                    {remaining
-                      ? `Code expires in ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`
-                      : "Code expired. Request a new code."}
-                  </span>
-                </>
-              )
-            )}
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
-            <button
-              className="primary"
-              disabled={
-                busy ||
-                (mode === "otp" &&
-                  (challenge ? !remaining || code.length !== 6 : wait > 0))
-              }
-            >
-              {busy
-                ? mode === "password"
-                  ? "Signing in…"
-                  : sending
-                    ? "Sending OTP…"
-                    : "Verifying…"
-                : mode === "password"
-                  ? "Sign in securely"
-                  : challenge
-                    ? "Verify and sign in"
-                    : wait
-                      ? `Try again in ${wait}s`
-                      : "Send verification code"}
-              <ArrowRight size={16} />
-            </button>
-          </form>
-          {mode === "otp" && challenge && (
-            <div className="auth-methods">
-              <button
-                type="button"
-                disabled={busy || wait > 0}
-                onClick={requestCode}
-              >
-                {wait ? `Resend in ${wait}s` : "Resend code"}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setChallenge(null);
-                  setCode("");
-                  setError("");
-                }}
-              >
-                Change email
-              </button>
-            </div>
-          )}
-          <div className="login-note">
-            First-time users receive read-only Viewer access after verifying
-            their email. Staff permissions are assigned by an administrator.
-          </div>
-          {guestEnabled && (
-            <section className="guest-access" aria-label="Guest access">
-              <h3>Explore as a guest</h3>
-              <p>Read-only preview with sample weather data. No email required.</p>
-              <div className="auth-methods">
-                <button type="button" disabled={busy} onClick={() => guestLogin("Administrator")}>
-                  {guestRole === "Administrator" ? "Opening preview…" : "Guest Admin"}
-                </button>
-                <button type="button" disabled={busy} onClick={() => guestLogin("Viewer")}>
-                  {guestRole === "Viewer" ? "Opening preview…" : "Guest Viewer"}
-                </button>
-              </div>
-            </section>
-          )}
-          <button className="text-button" onClick={onCitizen}>
-            Submit a citizen weather report <ArrowRight size={15} />
+      <section className="login-form" aria-label="Choose your workspace view" aria-busy={!!opening}>
+        <span className="eyebrow">YOUR OPERATIONAL WORKSPACE</span>
+        <h2>Choose your view</h2>
+        <p>Explore BYTEFORCE instantly. No account, email or password required.</p>
+        {notice && <p className="login-note" role="status">{notice}</p>}
+        <div className="workspace-choices">
+          <button type="button" className="workspace-choice" disabled={!!opening} onClick={() => enter("Viewer")}>
+            <Users size={22} aria-hidden="true" />
+            <span><strong>{opening === "Viewer" ? "Opening guest view…" : "View as Guest"}</strong><small>Explore maps, weather reports and analytics.</small></span>
+            <ArrowRight size={18} aria-hidden="true" />
           </button>
+          <button type="button" className="workspace-choice" disabled={!!opening} onClick={() => enter("Administrator")}>
+            <ShieldCheck size={22} aria-hidden="true" />
+            <span><strong>{opening === "Administrator" ? "Opening admin view…" : "View as Admin"}</strong><small>Explore verification and administration screens.</small></span>
+            <ArrowRight size={18} aria-hidden="true" />
+          </button>
+        </div>
+        {error && <p className="error" role="alert">{error}</p>}
+        <p className="login-note">Both views use sample data and are read-only. Production accounts and settings are not accessible.</p>
+        <button type="button" className="text-button" onClick={onCitizen} disabled={!!opening}>
+          Submit a citizen weather report <ArrowRight size={15} />
+        </button>
       </section>
     </main>
   );

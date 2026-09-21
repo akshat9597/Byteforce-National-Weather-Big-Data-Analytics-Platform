@@ -36,18 +36,18 @@ single workspace, with authoritative external feeds remaining a planned integrat
 | Verification centre | Evidence scoring, possible duplicates, officer decisions, reasoned rejection and audit history |
 | Analytics | Time ranges, state/district summaries, source/category distributions and CSV/JSON exports |
 | Operations | Alert handling, source registry, service health, user roles and configuration |
-| Authentication | Email OTP through Resend, password sign-in, role checks and secure session cookies |
-| Guest previews | Guest Admin and Guest Viewer, both read-only and isolated from production data |
+| Workspace entry | View as Guest or View as Admin without entering credentials; isolated sample sessions |
+| Guest previews | Guest and admin views, both read-only and isolated from production data |
 
 ## UI tour
 
 Actual application screenshots captured on 20 September 2026. All names and observations shown belong to the sample workspace. Open an image to inspect it at full resolution.
 
-### Sign-in and guest access
+### Workspace entry
 
-The original navy-and-white login supports email OTP, password sign-in and two guest previews. No email is required for a guest session.
+The navy-and-white entry page now offers **View as Guest** and **View as Admin**, with no email, password or OTP form. Both open isolated read-only sample workspaces.
 
-![BYTEFORCE login with email verification, password and Guest Admin / Guest Viewer buttons](docs/screenshots/login.png)
+![BYTEFORCE entry page with View as Guest and View as Admin options](docs/screenshots/login.png)
 
 <details>
 <summary><strong>National weather map</strong> — geographic filters, severity and event clusters</summary>
@@ -152,12 +152,14 @@ The script installs backend dependencies, installs frontend dependencies if need
 
 - **Application:** <http://localhost:3000>
 - **API documentation:** <http://localhost:8000/docs>
-- **Guest preview:** select **Guest Admin** or **Guest Viewer** on the login page.
+- **Guest preview:** select **View as Admin** or **View as Guest** on the entry page.
 - **Initial administrator:** `admin@byteforce.local`, using the bootstrap password you configured. Bootstrap settings do not reset an existing account.
 
 Guest previews use one-hour sessions and a separate temporary sample database. They cannot change records or expose real user accounts, uploads or realtime reports. Set `GUEST_LOGIN_ENABLED=false` on the backend to disable them.
 
-### Email OTP
+### Existing authentication backend
+
+The public interface uses the two workspace previews. Password and email OTP endpoints are retained for compatibility and existing accounts; their forms are no longer shown on the entry page. The following settings apply to those backend endpoints.
 
 Configure these values on the backend only:
 
@@ -169,7 +171,7 @@ OTP_EXPIRY_MINUTES=5
 OTP_RESEND_COOLDOWN_SECONDS=45
 ```
 
-Set an independent `OTP_HASH_SECRET` as well. New users receive the **Viewer** role only after verifying their email. Existing users retain their roles. OTP expiry, single use, attempt limits and resend cooldown are enforced server-side. Password and guest login remain available without email delivery configuration.
+Set an independent `OTP_HASH_SECRET` as well. New users receive the **Viewer** role only after verifying their email. Existing users retain their roles. OTP expiry, single use, attempt limits and resend cooldown are enforced server-side. The public guest and admin previews do not require email delivery configuration.
 
 See the [email setup and security details](docs/DEVELOPMENT.md#email-otp-sign-in-with-resend) for test-sender restrictions, migrations and cleanup. Never commit `.env`, private keys or database credentials.
 

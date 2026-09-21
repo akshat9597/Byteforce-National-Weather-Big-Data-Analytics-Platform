@@ -3,7 +3,7 @@
 Captured from the locally running application on 20 September 2026.
 
 - `overview.png`: national overview, calculated sample totals and alert cards.
-- `login.png`: email/password login and isolated guest preview options.
+- `login.png`: View as Guest / View as Admin entry page (updated 21 September 2026).
 - `national-map.png`: consolidated sample events, severity legend and base-map attribution.
 - `analytics.png`: sample-data trends and category/source charts.
 - `monitoring.png`: report stream interface (static snapshot in guest mode).

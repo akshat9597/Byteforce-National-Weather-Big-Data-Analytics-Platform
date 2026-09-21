@@ -10,7 +10,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Shell, navigation } from "@/components/shell";
-import { Login } from "@/features/auth";
+import { WorkspaceEntry } from "@/features/auth";
 import { Overview, WeatherMap } from "@/features/overview";
 import { CitizenForm, categories } from "@/features/citizen";
 import { ReportDetails, EventDetails } from "@/features/details";
@@ -152,15 +152,15 @@ export default function Platform({
       return (
         <main className="public-report">
           <button onClick={() => navigate("Overview")}>
-            <ArrowLeft size={15} /> Back to sign in
+            <ArrowLeft size={15} /> Back to view selection
           </button>
           <h1>BYTEFORCE · Citizen reporting</h1>
           <CitizenForm onSubmitted={() => {}} />
         </main>
       );
     return (
-      <Login
-        onLogin={(u) => {
+      <WorkspaceEntry
+        onEnter={(u) => {
           setUser(u);
           if (location.pathname === "/login") {
             const next =
@@ -364,7 +364,7 @@ export default function Platform({
       {user.is_guest && (
         <div className="guest-banner" role="status">
           <strong>Guest {user.role} preview</strong> · Sample data only. Changes are disabled.
-          Sign out to access your own account.
+          Use Switch view to choose another workspace view.
         </div>
       )}
       <div className="breadcrumb">

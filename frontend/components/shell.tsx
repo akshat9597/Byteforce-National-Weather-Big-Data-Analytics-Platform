@@ -141,7 +141,7 @@ export function Shell({
             </div>
           </button>
           <button className="logout" onClick={logout}>
-            <LogOut size={14} /> Sign out
+            <LogOut size={14} /> {user.is_guest ? "Switch view" : "Sign out"}
           </button>
         </div>
       </aside>
