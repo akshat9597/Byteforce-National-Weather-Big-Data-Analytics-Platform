@@ -1,6 +1,6 @@
 "use client";
 import { Radar, ArrowRight, ShieldCheck, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/services/api";
 import type { User } from "@/types";
 
@@ -14,9 +14,12 @@ export function WorkspaceEntry({
   const [opening, setOpening] = useState<"Administrator" | "Viewer" | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const warmup = useRef<Promise<unknown> | null>(null);
   useEffect(() => {
     if (new URLSearchParams(location.search).get("reason") === "expired")
       setNotice("Your preview session ended. Choose a view to continue.");
+    // Wake a sleeping Render instance while the user reads the entry screen.
+    warmup.current = api("/auth/guest-ready", { timeoutMs: 90000 }).catch(() => null);
   }, []);
 
   async function enter(role: "Administrator" | "Viewer") {
@@ -24,6 +27,7 @@ export function WorkspaceEntry({
     setOpening(role);
     setError("");
     try {
+      await warmup.current;
       onEnter(await api<User>("/auth/guest", {
         method: "POST",
         body: JSON.stringify({ role }),

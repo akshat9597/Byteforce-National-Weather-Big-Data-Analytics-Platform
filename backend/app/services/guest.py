@@ -19,7 +19,8 @@ def enabled():
     return os.getenv("GUEST_LOGIN_ENABLED", "true").lower() == "true"
 
 
-def sessions():
+def initialize():
+    """Build the isolated preview store once and reuse it for every guest request."""
     global _factory, _directory
     with _lock:
         if _factory is None:
@@ -49,3 +50,7 @@ def sessions():
                 seed(db)
             _factory = factory
     return _factory
+
+
+def sessions():
+    return initialize()

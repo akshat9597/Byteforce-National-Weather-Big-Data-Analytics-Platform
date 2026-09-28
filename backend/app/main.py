@@ -214,6 +214,17 @@ def guest_options():
     return {"enabled": enabled()}
 
 
+@app.get("/api/auth/guest-ready")
+def guest_ready():
+    """Warm the isolated preview store before the user clicks a guest view."""
+    from app.services.guest import enabled, initialize
+
+    if not enabled():
+        raise HTTPException(403, "Guest access is disabled.")
+    initialize()
+    return {"ready": True}
+
+
 @app.post("/api/auth/guest")
 def guest_login(data: GuestLogin, response: Response, request: Request):
     from app.services.guest import enabled, sessions
