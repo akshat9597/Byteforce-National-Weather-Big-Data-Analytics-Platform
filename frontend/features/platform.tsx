@@ -176,7 +176,6 @@ export default function Platform({
             window.dispatchEvent(new PopStateEvent("popstate"));
           }
         }}
-        onCitizen={() => navigate("Submit Report")}
       />
     );
   }
@@ -364,7 +363,7 @@ export default function Platform({
     >
       {user.is_guest && (
         <div className="guest-banner" role="status">
-          <strong>Admin preview</strong> · Sample data only. Changes are disabled.
+          <strong>Admin mode</strong> · Read-only preview. Sample data only. Changes are disabled.
         </div>
       )}
       <div className="breadcrumb">

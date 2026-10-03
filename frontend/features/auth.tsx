@@ -3,9 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/services/api";
 import type { User } from "@/types";
 
-export function WorkspaceEntry({ onEnter, onCitizen }: {
+export function WorkspaceEntry({ onEnter }: {
   onEnter: (user: User) => void;
-  onCitizen: () => void;
 }) {
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -37,8 +36,7 @@ export function WorkspaceEntry({ onEnter, onCitizen }: {
         request.current = null;
         setAttempt((value) => value + 1);
       }}>Retry opening workspace</button>
-      <button type="button" onClick={onCitizen}>Submit a citizen weather report</button>
-    </> : <p role="status">Opening Admin preview…</p>}
+    </> : <p role="status">Opening Admin mode…</p>}
     <p>Read-only preview · Sample data</p>
   </main>;
 }

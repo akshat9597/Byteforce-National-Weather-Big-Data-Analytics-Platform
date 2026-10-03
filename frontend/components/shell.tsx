@@ -167,7 +167,7 @@ export function Shell({
           <div className="header-status">
             <span>
               <i className={live ? "live-dot" : "amber-dot"} />
-              {user.is_guest ? "Admin preview · Sample data" : live ? "Live feed connected" : "Reconnecting feed"}
+              {user.is_guest ? "Admin mode · Sample data" : live ? "Live feed connected" : "Reconnecting feed"}
             </span>
             <small>
               Last sync:{" "}
