@@ -93,7 +93,7 @@ export default function Platform({
       setReady(true);
     } else {
       api<User>("/auth/me", { signal: controller.signal, timeoutMs: 8000 })
-        .then((identity) => { if (!disposed) setUser(identity); })
+        .then((identity) => { if (!disposed && (!identity.is_guest || identity.role === "Administrator")) setUser(identity); })
         .catch(() => {})
         .finally(() => { if (!disposed) setReady(true); });
     }
@@ -152,7 +152,7 @@ export default function Platform({
       return (
         <main className="public-report">
           <button onClick={() => navigate("Overview")}>
-            <ArrowLeft size={15} /> Back to view selection
+            <ArrowLeft size={15} /> Back to workspace
           </button>
           <h1>BYTEFORCE · Citizen reporting</h1>
           <CitizenForm onSubmitted={() => {}} />
@@ -165,7 +165,7 @@ export default function Platform({
           if (location.pathname === "/login") {
             const next =
               new URLSearchParams(location.search).get("next") || "/";
-            location.replace(
+            history.replaceState(null, "",
               next.startsWith("/") &&
                 !next.startsWith("//") &&
                 !next.includes("\\") &&
@@ -173,6 +173,7 @@ export default function Platform({
                 ? next
                 : "/",
             );
+            window.dispatchEvent(new PopStateEvent("popstate"));
           }
         }}
         onCitizen={() => navigate("Submit Report")}
@@ -363,8 +364,7 @@ export default function Platform({
     >
       {user.is_guest && (
         <div className="guest-banner" role="status">
-          <strong>Guest {user.role} preview</strong> · Sample data only. Changes are disabled.
-          Use Switch view to choose another workspace view.
+          <strong>Admin preview</strong> · Sample data only. Changes are disabled.
         </div>
       )}
       <div className="breadcrumb">

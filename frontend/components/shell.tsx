@@ -141,7 +141,7 @@ export function Shell({
             </div>
           </button>
           <button className="logout" onClick={logout}>
-            <LogOut size={14} /> {user.is_guest ? "Switch view" : "Sign out"}
+            <LogOut size={14} /> {user.is_guest ? "Restart preview" : "Sign out"}
           </button>
         </div>
       </aside>
@@ -167,7 +167,7 @@ export function Shell({
           <div className="header-status">
             <span>
               <i className={live ? "live-dot" : "amber-dot"} />
-              {user.is_guest ? "Guest sample data" : live ? "Live feed connected" : "Reconnecting feed"}
+              {user.is_guest ? "Admin preview · Sample data" : live ? "Live feed connected" : "Reconnecting feed"}
             </span>
             <small>
               Last sync:{" "}
