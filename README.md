@@ -272,3 +272,29 @@ Developed by **Team BYTEFORCE** for **Smart India Hackathon 2026**.
 | Category | Software |
 | Team ID | GITAM024 |
 | Institute | GITAM (Deemed to be University), Visakhapatnam |
+
+### Vercel sample workspace (no Render wake-up dependency)
+
+The Vercel frontend uses `/preview-api/*` for its automatically opened, read-only
+sample workspace. A bundled FastAPI function serves the existing domain queries
+against an isolated sample SQLite store. It never connects to the production
+store, runs migrations, starts feed workers, or sends email. Signed guest sessions
+and role checks remain enforced; mutations and real-account login are rejected.
+The regular `/api/*` proxy and the local development workflow remain available
+for the separately hosted production API.
+
+Deploy with the Vercel project rooted at `frontend/`. The committed `vercel.json`
+sets the install command, which creates a random **server-only** preview signing
+key for each deployment. Do not override that install command. This key is not
+committed or placed in public assets; a new deployment expires prior preview
+sessions. No new environment variables or paid services are needed for preview.
+
+After backend source changes, run `python3 scripts/package_preview.py` and commit
+`frontend/server/backend.zip` with the source change. To verify locally, run
+`node scripts/preview-key.mjs` from `frontend/`, then from the repository root run
+`.venv/bin/pytest tests/test_vercel_preview.py`. Install the frontend Python
+requirements and pytest into that environment first. This checks real packaged
+API responses, signed sessions, role restrictions and mutation rejection.
+
+The sample workspace is not live weather data. Real submissions, durable account
+storage, email, production feeds and WebSockets still require the production API.

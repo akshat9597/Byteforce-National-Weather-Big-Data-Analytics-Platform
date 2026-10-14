@@ -23,7 +23,7 @@ export async function api<T = any>(
     controller.abort();
   }, timeoutMs);
   try {
-    const r = await fetch("/api" + path, {
+    const r = await fetch((process.env.NEXT_PUBLIC_LOCAL_PREVIEW === "true" ? "/preview-api" : "/api") + path, {
       credentials: "include",
       ...request,
       signal: controller.signal,

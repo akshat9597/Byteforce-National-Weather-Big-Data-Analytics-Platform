@@ -1,0 +1,17 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm ci && node scripts/preview-key.mjs",
+  "functions": {
+    "api/preview.py": {
+      "maxDuration": 30,
+      "includeFiles": "server/**",
+      "excludeFiles": "{node_modules/**,.next/**,public/**,features/**,components/**}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/preview-api/:path*",
+      "destination": "/api/preview"
+    }
+  ]
+}

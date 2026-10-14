@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   outputFileTracingRoot: process.cwd(),
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  env: { NEXT_PUBLIC_LOCAL_PREVIEW: process.env.VERCEL ? "true" : "false" },
   async rewrites() {
     return [
       {

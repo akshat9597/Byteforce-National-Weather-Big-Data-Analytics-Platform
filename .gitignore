@@ -24,3 +24,5 @@ sources/
 output/
 tmp/
 .chart-data-*
+
+frontend/server/preview-key
